@@ -1,5 +1,7 @@
 # Hex Loader — загрузчик HEX в Arduino (Go + Fyne)
 
+Изменение для Workflow
+
 GUI-приложение для прошивки Arduino через `arduino-cli`.
 
 ![Go](https://img.shields.io/badge/Go-1.23-00ADD8?logo=go)
