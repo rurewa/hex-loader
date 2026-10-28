@@ -301,27 +301,31 @@ func main() {
 	iconImage.Resize(fyne.NewSize(64, 64))
 	iconImage.Refresh()
 
-	// Заголовок и версия — через widget.RichText.
-	// В отличие от canvas.Text, цвет берётся в момент отрисовки и
-	// перерисовывается при смене темы, поэтому адаптируется корректно.
+	// Заголовок и версия — через widget.RichText с Alignment: Center.
+	// Цвет берётся в момент отрисовки и перерисовывается при смене темы.
 	title := widget.NewRichText(&widget.TextSegment{
 		Text: "Загрузчик HEX файлов в Arduino",
 		Style: widget.RichTextStyle{
 			SizeName:  theme.SizeNameHeadingText,
 			TextStyle: fyne.TextStyle{Bold: true},
+			Alignment: fyne.TextAlignCenter,
 		},
 	})
 	title.Wrapping = fyne.TextWrapWord
 
 	versionLabel := widget.NewRichText(&widget.TextSegment{
-		Text:  "Версия: " + version,
-		Style: widget.RichTextStyle{SizeName: sizeVersionText},
+		Text: "Версия: " + version,
+		Style: widget.RichTextStyle{
+			SizeName:  sizeVersionText,
+			Alignment: fyne.TextAlignCenter,
+		},
 	})
+	versionLabel.Wrapping = fyne.TextWrapWord
 
 	header := container.NewVBox(
 		container.NewCenter(iconImage),
-		container.NewCenter(title),
-		container.NewCenter(versionLabel),
+		title,
+		versionLabel,
 	)
 
 	btnSelectHex := newButtonWithBorder("📂 Выбрать HEX", func() {
