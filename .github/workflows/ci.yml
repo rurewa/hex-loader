@@ -8,7 +8,7 @@ on:
   workflow_dispatch:   # опционально: ручной запуск для проверки
 
 jobs:
-    test:
+  test:
     runs-on: ubuntu-latest
     permissions:
       contents: write   # нужно для авто-коммита форматирования
@@ -124,7 +124,6 @@ jobs:
           files: ${{ matrix.artifact }}
           generate_release_notes: true
 
-  # ⬇⬇⬇ Вот здесь отступ ДОЛЖЕН быть 2 пробела, как у test и release
   build-appimage:
     needs: release
     if: startsWith(github.ref, 'refs/tags/v')
