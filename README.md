@@ -1,256 +1,270 @@
-# Hex Loader — загрузчик HEX в Arduino (Go + Fyne)
+## Hex Loader
 
-Изменение для Workflow
+[![Go](https://img.shields.io/badge/Go-00ADD8?logo=go&logoColor=white)](https://go.dev/)
+[![Fyne](https://img.shields.io/badge/Fyne-UI-blueviolet)](https://fyne.io/)
 
-GUI-приложение для прошивки Arduino через `arduino-cli`.
 
-![Go](https://img.shields.io/badge/Go-1.23-00ADD8?logo=go)
-![Fyne](https://img.shields.io/badge/Fyne-v2.8-blue)
-![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-success)
+![Логотип](/internal/assets/hex-loader.png)
 
----
+**GUI-загрузчик hex-файлов** на базе **Arduino CLI**, созданный на **Go** с использованием **Fyne** для Linux.
 
-## 📖 Оглавление
+### 🚀 Что умеет Hex Loader?
 
-- [О проекте](#about)
-- [Стек технологий](#stack)
-- [Структура проекта](#structure)
-- [Этапы разработки](#stages)
-- [CI/CD Pipeline](#cicd)
-- [Скачать бинарники](#download)
-- [Локальная сборка](#local-build)
-- [Требования для работы](#requirements)
-- [Как пользоваться](#usage)
+- Проверка прав пользователя Linux - предупреждает о необходимости группы `dialout` (`uucp`).
+- Выбирать **HEX**-файлы через стандартный диалог.
+- Сохранение последнего выбранного HEX-файла.
+- Обнаруживать подключенные платы (даже если они не распознаны `arduino-cli`).
+- Предлагать выбрать `FQBN` вручную для нераспознанных плат (из списка или вводом своего).
+- Загружать прошивку на плату с использованием `arduino-cli`.
+- Работать без интернета (используя локально установленные ядра и инструменты).
+- Работать в **Alt Linux p11** и других Linux-дистрибутивах с установленными зависимостями.
 
----
-
-<a name="about"></a>
-## 🎯 О проекте
-
-**Hex Loader** — это кроссплатформенное GUI-приложение на Go, которое позволяет прошивать Arduino-платы готовыми HEX-файлами через утилиту `arduino-cli`.
-
-Приложение автоматически:
-
-- Определяет подключённые платы через `arduino-cli board list`
-- Позволяет выбрать HEX-файл с фильтром `.hex`
-- Запоминает последний выбранный файл через `Preferences`
-- Показывает статус прошивки в реальном времени
-- Проверяет наличие прав на последовательные порты (группа `dialout`)
+![Img](/assets/images/1.png)
+![Img](/assets/images/2.png)
+![Img](/assets/images/3.png)
+![Img](/assets/images/4.png)
+![Img](/assets/images/5.png)
+![Img](/assets/images/6.png)
 
 ---
 
-<a name="stack"></a>
-## 🛠️ Стек технологий
+### 📦 Alt Linux p11
 
-| Технология | Назначение |
-|---|---|
-| **Go 1.23** | Язык программирования |
-| **Fyne v2.8** | Кроссплатформенный GUI-фреймворк |
-| **arduino-cli** | Утилита для прошивки Arduino |
-| **CGO + GLFW** | Нативные библиотеки для окна (компилируются из C) |
-| **Docker** | Локальная сборка и тесты |
-| **GitHub Actions** | CI/CD pipeline |
-| **MSYS2 + MinGW-w64** | GCC для CGO на Windows |
-
----
-
-<a name="structure"></a>
-## 📁 Структура проекта
-
-```
-hex-loader/
-├── .github/
-│   └── workflows/
-│       └── ci.yml              # GitHub Actions: CI/CD
-├── Dockerfile.test             # Образ для локальной сборки
-├── main.go                     # Весь код приложения
-├── go.mod                      # Модуль Go
-├── go.sum                      # Контрольные суммы зависимостей
-├── icon.png                    # Иконка приложения
-├── README.md                   # Этот файл
-└── .gitignore
+**Установка системных зависимостей** (делается один раз):
+```shell
+epmi --auto \
+    gcc-c++ \
+    golang \
+    rpm-build-golang \
+    libXcursor-devel \
+    libX11-devel \
+    libGL-devel \
+    libXrender-devel \
+    libXfixes-devel \
+    libXi-devel \
+    libXinerama-devel \
+    libXrandr-devel \
+    libwayland-egl-devel \
+    libXxf86vm-devel \
+    libxkbcommon-devel \
+    libwayland-cursor-devel \
+    arduino-cli
 ```
 
----
-
-<a name="stages"></a>
-## 🚀 Этапы разработки
-
-### Этап 1. Создание структуры проекта
-
-Создана базовая структура с файлами `go.mod`, `main.go`, `Dockerfile.test`, `.github/workflows/ci.yml` и `.gitignore`.
+#### Создание Go-проекта (на примере Hex Loader)
 
 ```bash
-mkdir -p hex-loader/.github/workflows
-cd hex-loader
+mkdir hex-loader && cd hex-loader
+micro main.go   # вставьте код
+go mod init hex-loader
+go get fyne.io/fyne/v2@latest
+go install fyne.io/tools/cmd/fyne@latest   # опционально
+go mod tidy
+go run main.go   # проверка
 ```
 
-### Этап 2. Написание GUI-кода
+#### Сборка Go-проекта
 
-В `main.go` реализовано:
-
-- **Кастомная тема** (`myTheme`) — увеличенный размер текста, убранные тени
-- **Кастомная кнопка с обводкой** (`buttonWithBorder`) — через `CreateRenderer()`
-- **Проверка `arduino-cli`** — если утилиты нет, кнопки блокируются
-- **Работа с портами** — через `exec.Command("arduino-cli", "board", "list")`
-- **Асинхронная прошивка** — через `goroutine` + `fyne.Do` для обновления UI
-
-### Этап 3. Локальная сборка в Docker
-
-Собран образ `hex-loader-test` с GUI-зависимостями:
-
+С оптимизацией размера бинарника:
 ```bash
-docker build -f Dockerfile.test -t hex-loader-test .
+go build -ldflags="-s -w" -trimpath -o hex-loader main.go
 ```
 
-Сгенерирован `go.sum`:
+- `-s` — удаляет отладочную информацию.
+- `-w` — удаляет DWARF-таблицы.
+- `-trimpath` — убирает пути к исходникам из бинарника.
 
+**Запуск:**
 ```bash
-MSYS_NO_PATHCONV=1 docker run --rm -u "$(id -u):$(id -g)" \
-  -e HOME=/tmp -e GOPATH=/tmp/go -e GOCACHE=/tmp/go-cache \
-  -v "$(pwd)":/app -v ~/.go-docker-cache:/tmp/go \
-  -w /app hex-loader-test go mod tidy
+./hex-loader
 ```
 
-### Этап 4. Форматирование и smoke-check
-
+**Проверка зависимостей:**
 ```bash
-MSYS_NO_PATHCONV=1 docker run --rm -u "$(id -u):$(id -g)" \
-  -e HOME=/tmp -e GOPATH=/tmp/go -e GOCACHE=/tmp/go-cache \
-  -v "$(pwd)":/app -v ~/.go-docker-cache:/tmp/go \
-  -w /app hex-loader-test sh -c "gofmt -w . && gofmt -l ."
-
-MSYS_NO_PATHCONV=1 docker run --rm -u "$(id -u):$(id -g)" \
-  -e HOME=/tmp -e GOPATH=/tmp/go -e GOCACHE=/tmp/go-cache \
-  -e CGO_ENABLED=1 \
-  -v "$(pwd)":/app -v ~/.go-docker-cache:/tmp/go \
-  -w /app hex-loader-test go build -o /tmp/hex-loader .
+ldd hex-loader
 ```
 
-### Этап 5. Публикация на GitHub
-
+#### Опционально
+**Проверка работы `arduino-cli`** (подключённые платы):
 ```bash
-git init
-git add .
-git commit -m "Initial commit: Hex Loader (Go+Fyne) with CI/CD"
-git branch -M main
-git remote add origin https://github.com/VellinHellin/hex-loader.git
-git push -u origin main
+arduino-cli board list
 ```
 
-### Этап 6. Первый запуск CI
+---
 
-Workflow `Hex Loader CI/CD` запустился автоматически после push в `main`. Job `test` прошел успешно за **2m 58s**.
+### 🐧 Ubuntu / Linux Mint
 
-### Этап 7. Создание релиза
-
+**Установка системных зависимостей** (один раз):
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+sudo apt update
+sudo apt install build-essential golang libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev libxxf86vm-dev libwayland-dev libwayland-egl-dev arduino-cli
 ```
 
-Job `release` развернулся в матрицу из 3 задач и за **8m 4s** собрал 3 бинарника параллельно.
+**Создание и сборка проекта** — аналогично **Alt Linux p11**.
 
 ---
 
-<a name="cicd"></a>
-## 🔄 CI/CD Pipeline
+### Создание Appimage
 
+1. Создаём отдельный каталог для AppImage-пакета.
+```shell
+mkdir AppImage
 ```
-push в main ──► job test
-                 ├─ gofmt -l .
-                 ├─ go vet ./...
-                 └─ go build
-
-push тега v* ──► job test ──► job release (matrix)
-                                ├─ ubuntu-latest   → hex-loader-linux-x64
-                                ├─ macos-14        → hex-loader-macos-arm64
-                                └─ windows-latest  → hex-loader-windows-x64.exe
-                                       │
-                                       ▼
-                                GitHub Release v0.1.0
+переходим в него
+```shell
+cd AppImage
 ```
-
-**Ключевые особенности:**
-
-- **Матричная сборка** — 3 ОС параллельно, каждая со своим нативным компилятором
-- **MSYS2 на Windows** — для CGO нужен GCC, путь определяется динамически
-- **`-H windowsgui`** — скрывает консольное окно в Windows-бинарнике
-- **`-ldflags "-X main.version=..."`** — версия подставляется из git-тега
-- **`softprops/action-gh-release@v2`** — публикует артефакты в Release
+2. Создаём каталог `./hexloader.AppDir/`.
+```shell
+mkdir ./hexloader.AppDir/
+```
+3. Копируем в `./hexloader.AppDir/` бинарник и иконку.
+```shell
+cp ../hexloader ./hexloader.AppDir/   # если бинарник в корне проекта
+cp ../icon.png ./hexloader.AppDir/icon.png
+```
+переходим `./hexloader.AppDir/`
+```shell
+cd ./hexloader.AppDir/
+```
+4. создаём файл `hexloader.desktop`.
+```shell
+micro hexloader.desktop
+```
+Содержимое `.desktop` файла
+```.desktop
+[Desktop Entry]
+Type=Application
+Name=Hex Loader
+Comment=GUI загрузчик HEX файлов для Arduino
+Exec=hexloader
+Icon=icon
+Categories=Development;Electronics;
+Terminal=false
+```
+> **Важно: имя иконки в .desktop должно совпадать с именем файла иконки (без расширения)**
+Правильная структура `./hexloader.AppDir/`
+```
+./hexloader.AppDir/
+├── hexloader          # Ваш бинарник (исполняемый)
+├── hexloader.desktop  # Файл .desktop
+├── icon.png      # Иконка (имя совпадает с Icon в .desktop)
+└── AppRun -> hexloader # Ссылка на бинарник
+```
+выходим из каталога `./hexloader.AppDir/`.
+```shell
+cd ..
+```
+5. выполняем загрузку `appimagetool`.
+```shell
+wget -c "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+```
+делаем `appimagetool` исполняемым
+```shell
+chmod +x appimagetool-x86_64.AppImage
+```
+выполняем сборку AppImage-пакета
+```shell
+ARCH=x86_64 ./appimagetool-x86_64.AppImage ./hexloader.AppDir/
+```
+запускаем получившийся AppImage-пакет
+```shell
+./Hex_Loader-x86_64.AppImage
+```
 
 ---
 
-<a name="download"></a>
-## 📦 Скачать бинарники
+### 🌍 Arduino CLI не может загрузить индексы в РФ из-за санкций
 
-👉 [**Releases**](https://github.com/VellinHellin/hex-loader/releases)
+**Варианты решения проблемы:**
 
-**Текущая версия: v0.1.0**
+1. **Используйте системный VPN** — самый надёжный способ.
+2. **Скачайте и распакуйте вручную** файлы индексов:
+   - `https://downloads.arduino.cc/packages/package_index.tar.bz2`
+   - `https://downloads.arduino.cc/libraries/library_index.tar.bz2`
 
-| ОС | Файл | Размер |
-|---|---|---|
-| 🐧 Linux x64 | `hex-loader-linux-x64` | 22.6 MB |
-| 🍎 macOS ARM64 | `hex-loader-macos-arm64` | 21.9 MB |
-| 🪟 Windows x64 | `hex-loader-windows-x64.exe` | 22.9 MB |
+   в папку `~/.arduino15`.
+3. **Перенесите папку `~/.arduino15/packages/`** с другого компьютера, где уже установлены ядра.
 
----
-
-<a name="local-build"></a>
-## 🧪 Локальная сборка
-
-Требования: Docker Desktop, Git Bash.
-
+**После переноса восстановите права:**
 ```bash
-docker build -f Dockerfile.test -t hex-loader-test .
+# Восстановить владельца
+chown -R $USER:$USER ~/.arduino15/
 
-MSYS_NO_PATHCONV=1 docker run --rm -u "$(id -u):$(id -g)" \
-  -e HOME=/tmp -e GOPATH=/tmp/go -e GOCACHE=/tmp/go-cache \
-  -e CGO_ENABLED=1 \
-  -v "$(pwd)":/app -v ~/.go-docker-cache:/tmp/go \
-  -w /app hex-loader-test go build -o hex-loader .
+# Права на файлы и папки
+find ~/.arduino15/packages/ -type f -exec chmod 644 {} \;
+find ~/.arduino15/packages/ -type d -exec chmod 755 {} \;
+
+# Исполняемые файлы
+find ~/.arduino15/packages/ -name "avrdude" -exec chmod +x {} \;
+find ~/.arduino15/packages/ -name "*.so*" -exec chmod +x {} \;
+find ~/.arduino15/packages/ -path "*/bin/*" -exec chmod +x {} \;
 ```
 
----
+### Проверить работу Hex Loader
 
-<a name="requirements"></a>
-## ⚠️ Требования для работы
+1. Создать скетч.
+```cpp
+// big_sketch.ino
+// Скетч занимает ~30 КБ в памяти Arduino Uno
+// Большой массив данных
+const int arraySize = 15000;
+unsigned char bigArray[arraySize];
 
-1. **`arduino-cli` в PATH** — без него кнопки заблокированы
-2. **Права на порты (Linux):**
+void setup() {
+  Serial.begin(9600);
+  // Заполняем массив данными
+  for (int i = 0; i < arraySize; i++) {
+    bigArray[i] = i % 256;
+  }
+  Serial.println("Большой скетч загружен!");
+}
 
-   ```bash
-   sudo usermod -a -G dialout $USER
-   ```
-
-   После этого выйдите из системы и зайдите заново
-
----
-
-<a name="usage"></a>
-## 🔧 Как пользоваться
-
-1. **📂 Выбрать HEX** — диалог с фильтром `.hex`. Путь сохраняется в настройках
-2. **🔌 Выбрать порт** — вызов `arduino-cli board list` покажет список плат
-3. **⬆️ Загрузить** — начнётся прошивка. Статус отображается внизу окна
-
----
-
-## 📋 Что было изучено
-
-- ✅ Создание GUI на Go с помощью **Fyne**
-- ✅ Кастомные темы и виджеты (через `CreateRenderer`)
-- ✅ Работа с `os/exec` для вызова внешних утилит
-- ✅ CGO и компиляция C-библиотек (GLFW) внутри Go
-- ✅ Матричные сборки в **GitHub Actions** (3 ОС параллельно)
-- ✅ Настройка **MSYS2 + MinGW-w64** для CGO на Windows
-- ✅ Динамический поиск `gcc.exe` на Windows runner
-- ✅ Автоматическая публикация в **GitHub Releases**
-- ✅ Семантическое версионирование (`v0.1.0`)
-- ✅ Подстановка версии из тега через `-ldflags "-X main.version=..."`
+void loop() {
+  // Ничего не делаем
+  delay(1000);
+}
+```
+2. Скомпилировать его в **Arduino IDE**, сохранить HEX-файл (Скетч → Экспортировать скомпилированный бинарный файл).
+3. Загрузить полученный HEX-файл в плату с помощью **Hex Loader**.
 
 ---
 
-## 👤 Автор
+## 📄 Лицензия
 
-**VellinHellin** — [GitHub](https://github.com/VellinHellin)
+- Этот проект распространяется под лицензией **MIT**. Подробнее см. в файле [LICENSE](LICENSE).
+- This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Благодарности
+
+Программа разработана при участии **AI-ассистента** (DeepSeek AI и Qwen3.8-Max) и доработана на основе обратной связи сообщества.
+
+Если у вас есть идеи по улучшению, создавайте **Issue** или отправляйте **Pull Request**!
+
+---
+
+## 📝 Дополнительная информация
+
+- Скрипт тестировался в **ALT Education 11.2** и **Ubuntu 22.04/24.04**, но должен работать в любом дистрибутиве Linux с графическим интерфейсом.
+- Для корректной установки плат, перед запуском Hex Loader запустите `arduino-cli` с VPN, чтобы загрузить индексы.
+
+---
+
+### 🛠️ Планы по улучшению
+
+- [x] Сохранение последнего выбранного FQBN
+- [x] Автообновление списка портов
+- [x] Встроить иконку в окно приложения
+- [ ] Расширить по высоте и сделать контур поля выбора FQBN в окне "Выбор FQBN"
+- [ ] Обновить инструкцию по назначению прав на `~/.arduino15/packages/`
+- [ ] Обновить инструкцию по копированию `icon.png` и `hexloader` в `./hexloader.AppDir/`
+- [ ] Испытать бинарник в разных linux
+- [x] Сборка в AppImage в Alt 11
+- [ ] Сборка в AppImage в Alt 10
+- [ ] Упаковка в DEB-пакет (Debian/Ubuntu)
+- [ ] Упаковка в RPM-пакет (Fedora/RedHat)
+- [ ] Сборка в Степлер на Alt Space
+- [ ] Упаковка в RPM-пакет для Alt Linux 10
+- [ ] Упаковка в RPM-пакет для Alt Linux 11
