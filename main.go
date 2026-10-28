@@ -23,14 +23,17 @@ import (
 // version устанавливается при сборке через -ldflags "-X main.version=..."
 var version = "dev"
 
+// sizeVersionText — кастомный размер для строки с версией.
+const sizeVersionText fyne.ThemeSizeName = "versionText"
+
 // BoardInfo хранит информацию о подключенной плате
 type BoardInfo struct {
 	Port string
 	FQBN string
 }
 
-// myTheme — кастомная тема: увеличенный текст, убранная тень.
-// Остальные цвета делегируются системной теме (светлой или тёмной).
+// myTheme — кастомная тема: увеличенный текст, убранная тень,
+// адаптивные цвета из системной темы.
 type myTheme struct {
 	fyne.Theme
 }
@@ -41,6 +44,10 @@ func (t myTheme) Size(name fyne.ThemeSizeName) float32 {
 		return 16
 	case theme.SizeNamePadding:
 		return 14
+	case theme.SizeNameHeadingText:
+		return 22
+	case sizeVersionText:
+		return 12
 	default:
 		return t.Theme.Size(name)
 	}
@@ -72,7 +79,6 @@ func (b *buttonWithBorder) CreateRenderer() fyne.WidgetRenderer {
 	return &buttonRenderer{btn: b}
 }
 
-// buttonRenderer — рендерер кнопки с обводкой
 type buttonRenderer struct {
 	btn       *buttonWithBorder
 	label     *canvas.Text
@@ -295,21 +301,27 @@ func main() {
 	iconImage.Resize(fyne.NewSize(64, 64))
 	iconImage.Refresh()
 
-	// Заголовок и версия используют цвет из текущей темы:
-	// тёмный на светлом фоне, светлый — на тёмном.
-	title := canvas.NewText("Загрузчик HEX файлов в Arduino", theme.Color(theme.ColorNameForeground))
-	title.TextSize = 22
-	title.TextStyle.Bold = true
-	title.Alignment = fyne.TextAlignCenter
+	// Заголовок и версия — через widget.RichText.
+	// В отличие от canvas.Text, цвет берётся в момент отрисовки и
+	// перерисовывается при смене темы, поэтому адаптируется корректно.
+	title := widget.NewRichText(&widget.TextSegment{
+		Text: "Загрузчик HEX файлов в Arduino",
+		Style: widget.RichTextStyle{
+			SizeName:  theme.SizeNameHeadingText,
+			TextStyle: fyne.TextStyle{Bold: true},
+		},
+	})
+	title.Wrapping = fyne.TextWrapWord
 
-	versionLabel := canvas.NewText("Версия: "+version, theme.Color(theme.ColorNameForeground))
-	versionLabel.TextSize = 12
-	versionLabel.Alignment = fyne.TextAlignCenter
+	versionLabel := widget.NewRichText(&widget.TextSegment{
+		Text:  "Версия: " + version,
+		Style: widget.RichTextStyle{SizeName: sizeVersionText},
+	})
 
 	header := container.NewVBox(
 		container.NewCenter(iconImage),
-		title,
-		versionLabel,
+		container.NewCenter(title),
+		container.NewCenter(versionLabel),
 	)
 
 	btnSelectHex := newButtonWithBorder("📂 Выбрать HEX", func() {
