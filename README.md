@@ -2,11 +2,9 @@
 
 [![Go](https://img.shields.io/badge/Go-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![Fyne](https://img.shields.io/badge/Fyne-UI-blueviolet)](https://fyne.io/)
-
-
 ![Логотип](/internal/assets/hex-loader.png)
 
-**GUI-загрузчик hex-файлов** на базе **Arduino CLI**, созданный на **Go** с использованием **Fyne** для Linux.
+**GUI-загрузчик hex-файлов** на базе **Arduino CLI**, созданный на **Go** с использованием **Fyne** для **Linux/MacOS/Linux**.
 
 ### 🚀 Что умеет Hex Loader?
 
@@ -25,6 +23,39 @@
 ![Img](/assets/images/4.png)
 ![Img](/assets/images/5.png)
 ![Img](/assets/images/6.png)
+
+---
+
+### Проверить работу Hex Loader
+
+1. Создать скетч.
+```cpp
+// big_sketch.ino
+// Скетч занимает ~30 КБ в памяти Arduino Uno
+// Большой массив данных
+const int arraySize = 15000;
+unsigned char bigArray[arraySize];git tag -d v0.1.0
+git push --delete origin v0.1.0
+# (если релиз остался — удалить вручную на GitHub)
+git tag v0.1.0
+git push origin v0.1.0
+
+void setup() {
+  Serial.begin(9600);
+  // Заполняем массив данными
+  for (int i = 0; i < arraySize; i++) {
+    bigArray[i] = i % 256;
+  }
+  Serial.println("Большой скетч загружен!");
+}
+
+void loop() {
+  // Ничего не делаем
+  delay(1000);
+}
+```
+2. Скомпилировать его в **Arduino IDE**, сохранить HEX-файл (Скетч → Экспортировать скомпилированный бинарный файл).
+3. Загрузить полученный HEX-файл в плату с помощью **Hex Loader**.
 
 ---
 
@@ -48,47 +79,18 @@ arduino-cli board list
    в папку `~/.arduino15`.
 3. **Перенесите папку `~/.arduino15/packages/`** с другого компьютера, где уже установлены ядра.
 
-**После переноса восстановите права:**
+**После переноса восстановите права (не протестировано!):**
 ```bash
 # Восстановить владельца
 chown -R $USER:$USER ~/.arduino15/
-
 # Права на файлы и папки
 find ~/.arduino15/packages/ -type f -exec chmod 644 {} \;
 find ~/.arduino15/packages/ -type d -exec chmod 755 {} \;
-
 # Исполняемые файлы
 find ~/.arduino15/packages/ -name "avrdude" -exec chmod +x {} \;
 find ~/.arduino15/packages/ -name "*.so*" -exec chmod +x {} \;
 find ~/.arduino15/packages/ -path "*/bin/*" -exec chmod +x {} \;
 ```
-
-### Проверить работу Hex Loader
-
-1. Создать скетч.
-```cpp
-// big_sketch.ino
-// Скетч занимает ~30 КБ в памяти Arduino Uno
-// Большой массив данных
-const int arraySize = 15000;
-unsigned char bigArray[arraySize];
-
-void setup() {
-  Serial.begin(9600);
-  // Заполняем массив данными
-  for (int i = 0; i < arraySize; i++) {
-    bigArray[i] = i % 256;
-  }
-  Serial.println("Большой скетч загружен!");
-}
-
-void loop() {
-  // Ничего не делаем
-  delay(1000);
-}
-```
-2. Скомпилировать его в **Arduino IDE**, сохранить HEX-файл (Скетч → Экспортировать скомпилированный бинарный файл).
-3. Загрузить полученный HEX-файл в плату с помощью **Hex Loader**.
 
 ---
 
@@ -119,14 +121,15 @@ void loop() {
 - [x] Сохранение последнего выбранного FQBN
 - [x] Автообновление списка портов
 - [x] Встроить иконку в окно приложения
-- [ ] Расширить по высоте и сделать контур поля выбора FQBN в окне "Выбор FQBN"
+- [x] Расширить по высоте и сделать контур поля выбора FQBN в окне "Выбор FQBN"
 - [ ] Обновить инструкцию по назначению прав на `~/.arduino15/packages/`
-- [ ] Обновить инструкцию по копированию `icon.png` и `hexloader` в `./hexloader.AppDir/`
-- [ ] Испытать бинарник в разных linux
-- [x] Сборка в AppImage в Alt 11
-- [ ] Сборка в AppImage в Alt 10
+- [x] Испытать бинарник в разных linux
+- [ ] Испытать бинарник в разных MacOS
+- [ ] Испытать бинарник в разных Windows
+- [x] Сборка в AppImage
+- [ ] Испытать AppImage в разных linux (включая Alt Linux 10)
 - [ ] Упаковка в DEB-пакет (Debian/Ubuntu)
 - [ ] Упаковка в RPM-пакет (Fedora/RedHat)
+- [ ] Упаковка в RPM-пакет Alt Linux 10
+- [ ] Упаковка в RPM-пакет Alt Linux 11
 - [ ] Сборка в Степлер на Alt Space
-- [ ] Упаковка в RPM-пакет для Alt Linux 10
-- [ ] Упаковка в RPM-пакет для Alt Linux 11
