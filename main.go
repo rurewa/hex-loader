@@ -17,7 +17,11 @@ import (
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"hex-loader/internal/assets"
 )
+
+// version устанавливается при сборке через -ldflags "-X main.version=..."
+var version = "dev"
 
 // BoardInfo хранит информацию о подключенной плате
 type BoardInfo struct {
@@ -265,7 +269,7 @@ func main() {
 	a.Settings().SetTheme(&myTheme{theme.DefaultTheme()})
 
 	w := a.NewWindow("Загрузчик HEX в Arduino")
-	w.Resize(fyne.NewSize(700, 480))
+	w.Resize(fyne.NewSize(700, 520))
 
 	var hexPath string
 	var portPath string
@@ -289,7 +293,8 @@ func main() {
 	statusLabel := widget.NewLabel("Готов к работе")
 
 	// --- ИКОНКА В ИНТЕРФЕЙСЕ ---
-	iconImage := canvas.NewImageFromFile("icon.png")
+	iconResource := fyne.NewStaticResource("hex-loader.png", assets.IconPNG)
+	iconImage := canvas.NewImageFromResource(iconResource)
 	iconImage.FillMode = canvas.ImageFillContain
 	iconImage.SetMinSize(fyne.NewSize(64, 64))
 	iconImage.Resize(fyne.NewSize(64, 64))
@@ -301,10 +306,16 @@ func main() {
 	title.TextStyle.Bold = true
 	title.Alignment = fyne.TextAlignCenter
 
-	// Собираем заголовок с иконкой
+	// Создаём подпись с версией
+	versionLabel := canvas.NewText("Версия: "+version, color.NRGBA{R: 0x66, G: 0x66, B: 0x66, A: 0xFF})
+	versionLabel.TextSize = 12
+	versionLabel.Alignment = fyne.TextAlignCenter
+
+	// Собираем заголовок с иконкой и версией
 	header := container.NewVBox(
 		container.NewCenter(iconImage),
 		title,
+		versionLabel,
 	)
 
 	// Кнопка выбора HEX с фильтром и сохранением пути
@@ -424,7 +435,7 @@ func main() {
 	}
 
 	content := container.NewVBox(
-		header, // Заголовок с иконкой
+		header, // Заголовок с иконкой и версией
 		widget.NewSeparator(),
 		container.NewHBox(btnSelectHex, hexLabel),
 		container.NewHBox(btnSelectPort, portLabel),
