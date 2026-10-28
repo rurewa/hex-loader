@@ -29,7 +29,8 @@ type BoardInfo struct {
 	FQBN string
 }
 
-// myTheme — кастомная тема с увеличенным размером и убранной тенью
+// myTheme — кастомная тема: увеличенный текст, убранная тень.
+// Остальные цвета делегируются системной теме (светлой или тёмной).
 type myTheme struct {
 	fyne.Theme
 }
@@ -47,10 +48,6 @@ func (t myTheme) Size(name fyne.ThemeSizeName) float32 {
 
 func (t myTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 	switch name {
-	case theme.ColorNamePrimary:
-		return color.NRGBA{R: 0x88, G: 0x88, B: 0x88, A: 0xFF}
-	case theme.ColorNameBackground:
-		return color.NRGBA{R: 0xE0, G: 0xE0, B: 0xE0, A: 0xFF}
 	case theme.ColorNameShadow:
 		return color.Transparent
 	default:
@@ -98,7 +95,7 @@ func (r *buttonRenderer) init() {
 
 	r.border = canvas.NewRectangle(color.Transparent)
 	r.border.StrokeWidth = 2
-	r.border.StrokeColor = color.NRGBA{R: 0x33, G: 0x33, B: 0x33, A: 0xFF}
+	r.border.StrokeColor = theme.Color(theme.ColorNameForeground)
 	r.border.CornerRadius = 8
 
 	r.container = container.NewStack(r.bg, r.border, r.label)
@@ -124,10 +121,10 @@ func (r *buttonRenderer) Refresh() {
 
 	if r.btn.Disabled() {
 		r.bg.FillColor = theme.Color(theme.ColorNameDisabled)
-		r.border.StrokeColor = color.NRGBA{R: 0x66, G: 0x66, B: 0x66, A: 0x80}
+		r.border.StrokeColor = theme.Color(theme.ColorNameDisabled)
 	} else {
 		r.bg.FillColor = theme.Color(theme.ColorNameButton)
-		r.border.StrokeColor = color.NRGBA{R: 0x33, G: 0x33, B: 0x33, A: 0xFF}
+		r.border.StrokeColor = theme.Color(theme.ColorNameForeground)
 	}
 	r.bg.CornerRadius = 8
 	r.border.CornerRadius = 8
@@ -275,10 +272,8 @@ func main() {
 	var portPath string
 	var fqbn string
 
-	// Получаем preferences для сохранения настроек
 	prefs := a.Preferences()
 
-	// Загружаем последний выбранный HEX файл из настроек
 	lastHexPath := prefs.String("lastHexPath")
 	if lastHexPath != "" {
 		hexPath = lastHexPath
@@ -300,25 +295,23 @@ func main() {
 	iconImage.Resize(fyne.NewSize(64, 64))
 	iconImage.Refresh()
 
-	// Создаём заголовок
-	title := canvas.NewText("Загрузчик HEX файлов в Arduino", color.NRGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF})
+	// Заголовок и версия используют цвет из текущей темы:
+	// тёмный на светлом фоне, светлый — на тёмном.
+	title := canvas.NewText("Загрузчик HEX файлов в Arduino", theme.Color(theme.ColorNameForeground))
 	title.TextSize = 22
 	title.TextStyle.Bold = true
 	title.Alignment = fyne.TextAlignCenter
 
-	// Создаём подпись с версией
-	versionLabel := canvas.NewText("Версия: "+version, color.NRGBA{R: 0x66, G: 0x66, B: 0x66, A: 0xFF})
+	versionLabel := canvas.NewText("Версия: "+version, theme.Color(theme.ColorNameForeground))
 	versionLabel.TextSize = 12
 	versionLabel.Alignment = fyne.TextAlignCenter
 
-	// Собираем заголовок с иконкой и версией
 	header := container.NewVBox(
 		container.NewCenter(iconImage),
 		title,
 		versionLabel,
 	)
 
-	// Кнопка выбора HEX с фильтром и сохранением пути
 	btnSelectHex := newButtonWithBorder("📂 Выбрать HEX", func() {
 		fileFilter := storage.NewExtensionFileFilter([]string{".hex"})
 		fileDialog := dialog.NewFileOpen(func(reader fyne.URIReadCloser, err error) {
@@ -334,7 +327,6 @@ func main() {
 			hexLabel.SetText(hexPath)
 			statusLabel.SetText("HEX файл выбран")
 
-			// Сохраняем путь в preferences
 			prefs.SetString("lastHexPath", hexPath)
 		}, w)
 		fileDialog.SetFilter(fileFilter)
@@ -348,7 +340,6 @@ func main() {
 			return
 		}
 		if len(boards) == 0 {
-			// Используем кастомный диалог вместо dialog.ShowInformation
 			showCustomInformation("Нет плат", "Подключенные Arduino платы не найдены.", w)
 			return
 		}
@@ -396,7 +387,6 @@ func main() {
 			}
 		}
 
-		// Проверяем, установлено ли ядро
 		cmd := exec.Command("arduino-cli", "core", "list")
 		var out bytes.Buffer
 		cmd.Stdout = &out
@@ -435,7 +425,7 @@ func main() {
 	}
 
 	content := container.NewVBox(
-		header, // Заголовок с иконкой и версией
+		header,
 		widget.NewSeparator(),
 		container.NewHBox(btnSelectHex, hexLabel),
 		container.NewHBox(btnSelectPort, portLabel),
@@ -478,31 +468,26 @@ func showFQBNInputDialog(w fyne.Window, fqbn *string, statusLabel *widget.Label)
 		"esp8266:esp8266:generic",
 	}
 
-	// Создаём Select
 	selectWidget := widget.NewSelect(commonFQBNs, func(s string) {
 		*fqbn = s
 		statusLabel.SetText("FQBN выбран: " + s)
 	})
 
-	// Создаём рамку (контур)
 	border := canvas.NewRectangle(color.Transparent)
 	border.StrokeWidth = 2
-	border.StrokeColor = color.NRGBA{R: 0x33, G: 0x33, B: 0x33, A: 0xFF}
+	border.StrokeColor = theme.Color(theme.ColorNameForeground)
 	border.CornerRadius = 8
 
-	// Собираем Select с рамкой в стек (БЕЗ отступов)
 	selectWithBorder := container.NewStack(
 		border,
-		selectWidget, // ← Прямо на рамку, без Padded
+		selectWidget,
 	)
 
-	// Оборачиваем в контейнер с фиксированной шириной и высотой
 	selectWrapper := container.NewHBox(
 		selectWithBorder,
 	)
 	selectWrapper.Resize(fyne.NewSize(600, 80))
 
-	// Создаём Entry для ручного ввода
 	entry := widget.NewEntry()
 	entry.SetPlaceHolder("Или введите свой FQBN вручную")
 	entry.OnSubmitted = func(s string) {
@@ -541,7 +526,6 @@ func showFQBNInputDialog(w fyne.Window, fqbn *string, statusLabel *widget.Label)
 	dialogObj.Show()
 }
 
-// getAvailableBoards возвращает список плат через текстовый парсинг
 func getAvailableBoards() ([]BoardInfo, error) {
 	cmd := exec.Command("arduino-cli", "board", "list")
 	var out bytes.Buffer
