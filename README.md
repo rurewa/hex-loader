@@ -17,12 +17,12 @@
 - Работать без интернета (используя локально установленные ядра и инструменты).
 - Работать в **Alt Linux p11** и других Linux-дистрибутивах с установленными зависимостями.
 
-![Img](/assets/images/1.png)
-![Img](/assets/images/2.png)
-![Img](/assets/images/3.png)
-![Img](/assets/images/4.png)
-![Img](/assets/images/5.png)
-![Img](/assets/images/6.png)
+![Img](/screenshots/1.png)
+![Img](/screenshots/2.png)
+![Img](/screenshots/3.png)
+![Img](/screenshots/4.png)
+![Img](/screenshots/5.png)
+![Img](/screenshots/6.png)
 
 ---
 
