@@ -1,135 +1,178 @@
-## Hex Loader
+# Hex Loader
 
-[![Go](https://img.shields.io/badge/Go-00ADD8?logo=go&logoColor=white)](https://go.dev/)
-[![Fyne](https://img.shields.io/badge/Fyne-UI-blueviolet)](https://fyne.io/)
-![Логотип](/internal/assets/hex-loader.png)
+[![CI](https://github.com/USER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/USER/REPO/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Go](https://img.shields.io/badge/Go-1.23-00ADD8?logo=go&logoColor=white)](https://go.dev/)
+[![Fyne](https://img.shields.io/badge/Fyne-2.8-blueviolet)](https://fyne.io/)
 
-**GUI-загрузчик hex-файлов** на базе **Arduino CLI**, созданный на **Go** с использованием **Fyne** для **Linux/MacOS/Linux**.
+<p align="center">
+  <img src="internal/assets/hex-loader.png" alt="Hex Loader" width="128">
+</p>
 
-### 🚀 Что умеет Hex Loader?
+**GUI-загрузчик HEX-файлов** для плат Arduino на базе **Arduino CLI**, написанный на **Go** с использованием **Fyne**. Работает в Linux, macOS и Windows.
 
-- Проверка прав пользователя Linux - предупреждает о необходимости группы `dialout` (`uucp`).
-- Выбирать **HEX**-файлы через стандартный диалог.
-- Сохранение последнего выбранного HEX-файла.
-- Обнаруживать подключенные платы (даже если они не распознаны `arduino-cli`).
-- Предлагать выбрать `FQBN` вручную для нераспознанных плат (из списка или вводом своего).
-- Загружать прошивку на плату с использованием `arduino-cli`.
-- Работать без интернета (используя локально установленные ядра и инструменты).
-- Работать в **Alt Linux p11** и других Linux-дистрибутивах с установленными зависимостями.
+## 🚀 Возможности
 
-![Img](/screenshots/1.png)
-![Img](/screenshots/2.png)
-![Img](/screenshots/3.png)
-![Img](/screenshots/4.png)
-![Img](/screenshots/5.png)
-![Img](/screenshots/6.png)
+- 📂 Выбор HEX-файла через стандартный диалог (фильтр `.hex`).
+- 💾 Сохранение последнего выбранного файла между запусками.
+- 🔌 Обнаружение подключённых плат (даже не распознанных `arduino-cli`).
+- 🛠️ Ручной выбор `FQBN` для нераспознанных плат: из списка или вводом своего.
+- ⬆️ Загрузка прошивки через `arduino-cli` с индикацией процесса.
+- 🌗 Адаптивная светлая/тёмная тема — подстраивается под оформление ОС.
+- 🛡️ Проверка прав: предупреждает, если пользователь не в группе `dialout`/`uucp`.
+- 📴 Работает офлайн — использует локально установленные ядра и инструменты.
+- 🐧 Проверено на ALT Linux 11 и Ubuntu 22.04/24.04.
 
----
+## 📸 Скриншоты
 
-### Проверить работу Hex Loader
+| Главное окно | Выбор платы | Выбор FQBN |
+|:---:|:---:|:---:|
+| ![1](screenshots/1.png) | ![2](screenshots/2.png) | ![3](screenshots/3.png) |
 
-1. Создать скетч.
-```cpp
-// big_sketch.ino
-// Скетч занимает ~30 КБ в памяти Arduino Uno
-// Большой массив данных
-const int arraySize = 15000;
-unsigned char bigArray[arraySize];git tag -d v0.1.0
-git push --delete origin v0.1.0
-# (если релиз остался — удалить вручную на GitHub)
-git tag v0.1.0
-git push origin v0.1.0
+| Загрузка | Успех | Тёмная тема |
+|:---:|:---:|:---:|
+| ![4](screenshots/4.png) | ![5](screenshots/5.png) | ![6](screenshots/6.png) |
 
-void setup() {
-  Serial.begin(9600);
-  // Заполняем массив данными
-  for (int i = 0; i < arraySize; i++) {
-    bigArray[i] = i % 256;
-  }
-  Serial.println("Большой скетч загружен!");
-}
+## 📦 Установка
 
-void loop() {
-  // Ничего не делаем
-  delay(1000);
-}
+Скачайте нужный файл из [Releases](https://github.com/USER/REPO/releases).
+
+### Debian / Ubuntu / Mint
+```bash
+sudo apt install ./hex-loader_0.1.0_amd64.deb
 ```
-2. Скомпилировать его в **Arduino IDE**, сохранить HEX-файл (Скетч → Экспортировать скомпилированный бинарный файл).
-3. Загрузить полученный HEX-файл в плату с помощью **Hex Loader**.
 
----
+### Fedora / RHEL / openSUSE / ALT Linux
+```bash
+sudo dnf install ./hex-loader-0.1.0.x86_64.rpm
+```
+или
+```bash
+sudo rpm -i ./hex-loader-0.1.0.x86_64.rpm
+```
 
-#### Опционально
-**Проверка работы `arduino-cli`** (подключённые платы):
+### AppImage (любой дистрибутив Linux, без установки)
+```bash
+chmod +x Hex_Loader-v0.1.0-x86_64.AppImage
+./Hex_Loader-v0.1.0-x86_64.AppImage
+```
+
+### Бинарники
+| Платформа | Файл |
+|-----------|------|
+| Linux x86_64 | `hex-loader-linux-x64` |
+| macOS (Apple Silicon) | `hex-loader-macos-arm64` |
+| Windows x86_64 | `hex-loader-windows-x64.exe` |
+
+После скачивания сделайте файл исполняемым (`chmod +x`) и запустите.
+
+### Сборка из исходников
+```bash
+git clone https://github.com/USER/REPO.git
+cd hex-loader
+go build -buildvcs=false -ldflags="-s -w" -o hexloader .
+./hexloader
+```
+
+Требуются Go 1.23+ и GUI-зависимости:
+```bash
+# ALT Linux
+epmi --auto gcc-c++ golang libXcursor-devel libX11-devel libGL-devel \
+  libXrender-devel libXfixes-devel libXi-devel libXinerama-devel \
+  libXrandr-devel libwayland-egl-devel libXxf86vm-devel \
+  libxkbcommon-devel libwayland-cursor-devel
+
+# Ubuntu/Debian
+sudo apt install build-essential golang libgl1-mesa-dev libegl1-mesa-dev \
+  xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols
+```
+
+## ⚙️ Требования
+
+- **`arduino-cli`** установлен и доступен в `PATH`.
+- **Linux:** пользователь в группе `dialout` (или `uucp`). Проверить:
+  ```bash
+  groups | grep -E 'dialout|uucp'
+  ```
+  Если нет:
+  ```bash
+  sudo usermod -a -G dialout $USER
+  ```
+  После этого нужно выйти и зайти заново.
+
+## 🧪 Как проверить работу
+
+1. Создайте тестовый скетч `big_sketch.ino`:
+   ```cpp
+   // Занимает ~30 КБ памяти Arduino Uno
+   const int arraySize = 15000;
+   unsigned char bigArray[arraySize];
+
+   void setup() {
+     Serial.begin(9600);
+     for (int i = 0; i < arraySize; i++) {
+       bigArray[i] = i % 256;
+     }
+     Serial.println("Большой скетч загружен!");
+   }
+
+   void loop() {
+     delay(1000);
+   }
+   ```
+2. В **Arduino IDE**: *Скетч → Экспортировать скомпилированный бинарный файл* — получите `.hex`.
+3. Запустите **Hex Loader**, выберите `.hex`, выберите порт, нажмите «Загрузить».
+
+Проверить, что `arduino-cli` видит плату:
 ```bash
 arduino-cli board list
 ```
 
----
+## 🌍 Проблема с загрузкой индексов Arduino CLI в РФ
 
-### 🌍 Arduino CLI не может загрузить индексы в РФ из-за санкций
+Официальные серверы `downloads.arduino.cc` возвращают **403 Forbidden** для запросов из РФ. Варианты решения:
 
-**Варианты решения проблемы:**
-
-1. **Используйте системный VPN** — самый надёжный способ.
-2. **Скачайте и распакуйте вручную** файлы индексов:
-   - `https://downloads.arduino.cc/packages/package_index.tar.bz2`
-   - `https://downloads.arduino.cc/libraries/library_index.tar.bz2`
-
-   в папку `~/.arduino15`.
-3. **Перенесите папку `~/.arduino15/packages/`** с другого компьютера, где уже установлены ядра.
-
-**После переноса восстановите права (не протестировано!):**
-```bash
-# Восстановить владельца
-chown -R $USER:$USER ~/.arduino15/
-# Права на файлы и папки
-find ~/.arduino15/packages/ -type f -exec chmod 644 {} \;
-find ~/.arduino15/packages/ -type d -exec chmod 755 {} \;
-# Исполняемые файлы
-find ~/.arduino15/packages/ -name "avrdude" -exec chmod +x {} \;
-find ~/.arduino15/packages/ -name "*.so*" -exec chmod +x {} \;
-find ~/.arduino15/packages/ -path "*/bin/*" -exec chmod +x {} \;
-```
-
----
+1. **VPN** — самый надёжный способ: запустите `arduino-cli core update-index` через VPN, затем работайте офлайн.
+2. **Ручная загрузка индексов** — скачайте с VPN и распакуйте в `~/.arduino15`:
+   - [`package_index.tar.bz2`](https://downloads.arduino.cc/packages/package_index.tar.bz2)
+   - [`library_index.tar.bz2`](https://downloads.arduino.cc/libraries/library_index.tar.bz2)
+3. **Перенос `~/.arduino15/packages/`** с машины, где ядра уже установлены. После переноса восстановите права:
+   ```bash
+   chown -R $USER:$USER ~/.arduino15/
+   find ~/.arduino15/packages/ -type f -exec chmod 644 {} \;
+   find ~/.arduino15/packages/ -type d -exec chmod 755 {} \;
+   find ~/.arduino15/packages/ -name "avrdude" -exec chmod +x {} \;
+   find ~/.arduino15/packages/ -name "*.so*" -exec chmod +x {} \;
+   find ~/.arduino15/packages/ -path "*/bin/*" -exec chmod +x {} \;
+   ```
 
 ## 📄 Лицензия
 
-- Этот проект распространяется под лицензией **MIT**. Подробнее см. в файле [LICENSE](LICENSE).
-- This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
+Проект распространяется под лицензией **MIT**. См. [LICENSE](LICENSE).
 
 ## 🙏 Благодарности
 
-Программа разработана при участии **AI-ассистента** (DeepSeek AI и Qwen3.8-Max) и доработана на основе обратной связи сообщества.
+- [Fyne](https://fyne.io/) — кроссплатформенный GUI-фреймворк.
+- [Arduino CLI](https://github.com/arduino/arduino-cli) — работа с платами и загрузка.
+- [nFPM](https://nfpm.goreleaser.com/) — сборка `.deb` и `.rpm`.
+- [appimagetool](https://github.com/AppImage/appimagetool) — сборка AppImage.
+- AI-ассистенты **DeepSeek AI** и **Qwen3.8-Max** — помощь в разработке.
 
-Если у вас есть идеи по улучшению, создавайте **Issue** или отправляйте **Pull Request**!
+Есть идеи или нашли баг? Создавайте [Issue](https://github.com/USER/REPO/issues) или присылайте Pull Request.
 
----
-
-## 📝 Дополнительная информация
-
-- Скрипт тестировался в **ALT Education 11.2** и **Ubuntu 22.04/24.04**, но должен работать в любом дистрибутиве Linux с графическим интерфейсом.
-- Для корректной установки плат, перед запуском Hex Loader запустите `arduino-cli` с VPN, чтобы загрузить индексы.
-
----
-
-### 🛠️ Планы по улучшению
+## 🛠️ Планы
 
 - [x] Сохранение последнего выбранного FQBN
-- [x] Автообновление списка портов
-- [x] Встроить иконку в окно приложения
-- [x] Расширить по высоте и сделать контур поля выбора FQBN в окне "Выбор FQBN"
-- [ ] Обновить инструкцию по назначению прав на `~/.arduino15/packages/`
-- [x] Испытать бинарник в разных linux
-- [ ] Испытать бинарник в разных MacOS
-- [ ] Испытать бинарник в разных Windows
-- [x] Сборка в AppImage
-- [ ] Испытать AppImage в разных linux (включая Alt Linux 10)
-- [ ] Упаковка в DEB-пакет (Debian/Ubuntu)
-- [ ] Упаковка в RPM-пакет (Fedora/RedHat)
-- [ ] Упаковка в RPM-пакет Alt Linux 10
-- [ ] Упаковка в RPM-пакет Alt Linux 11
-- [ ] Сборка в Степлер на Alt Space
+- [x] Встроенная иконка в окне приложения
+- [x] Расширенное поле выбора FQBN с контуром
+- [x] Адаптивная светлая/тёмная тема
+- [x] Сборка AppImage
+- [x] Упаковка в `.deb`
+- [x] Упаковка в `.rpm`
+- [x] Бинарники для Linux/macOS/Windows
+- [ ] Тестирование бинарника на разных версиях macOS
+- [ ] Тестирование бинарника на разных версиях Windows
+- [ ] Тестирование AppImage в ALT Linux 10 и других дистрибутивах
+- [ ] Проверка установки RPM в ALT Linux 10/11
+- [ ] Сборка пакета Stapler для ALT Space
+- [ ] Публикация в AppImageHub

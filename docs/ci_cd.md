@@ -1,5 +1,12 @@
 ## CI/CD
 
+### YAML
+
+проверить YAML локально
+```shell
+python3 -c "import yaml,sys; yaml.safe_load(open('.github/workflows/ci.yml'))" && echo OK
+```
+
 ### Управление релизами с помощью тэгов
 
 Получить локальные теги:
