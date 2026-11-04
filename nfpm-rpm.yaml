@@ -1,0 +1,33 @@
+name: hex-loader
+arch: x86_64
+platform: linux
+version: ${VERSION}
+section: utils
+priority: optional
+maintainer: Your Name <your.email@example.com>
+description: |
+  GUI HEX uploader for Arduino.
+  Built with Go and Fyne.
+vendor: Hex Loader
+homepage: https://github.com/yourusername/hex-loader
+license: MIT
+contents:
+  - src: pkg/usr/bin/hexloader
+    dst: /usr/bin/hexloader
+  - src: pkg/usr/share/applications/hexloader.desktop
+    dst: /usr/share/applications/hexloader.desktop
+  - src: pkg/usr/share/icons/hicolor/256x256/apps/hexloader.png
+    dst: /usr/share/icons/hicolor/256x256/apps/hexloader.png
+depends:
+  - mesa-libGL
+  - mesa-libEGL
+  - libX11
+  - libXrandr
+  - libXcursor
+  - libXinerama
+  - libXi
+  - libXxf86vm
+  - wayland-libs-client
+  - wayland-libs-cursor
+  - wayland-libs-egl
+  - libxkbcommon
