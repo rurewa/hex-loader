@@ -19,6 +19,7 @@ contents:
   - src: pkg/usr/share/icons/hicolor/256x256/apps/hexloader.png
     dst: /usr/share/icons/hicolor/256x256/apps/hexloader.png
 depends:
+  - arduino-cli
   - mesa-libGL
   - mesa-libEGL
   - libX11
