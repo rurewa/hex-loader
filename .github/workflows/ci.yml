@@ -1,3 +1,178 @@
+name: Hex Loader CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+      - name: Install GUI dependencies (Linux)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-dev libegl1-mesa-dev xorg-dev \
+            libwayland-dev libxkbcommon-dev wayland-protocols
+      - name: Auto-format code
+        run: gofmt -w .
+      - name: Commit formatting changes
+        if: |
+          !startsWith(github.ref, 'refs/tags/') &&
+          (github.event_name == 'push' ||
+           github.event.pull_request.head.repo.full_name == github.repository)
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'style: apply gofmt [skip ci]'
+          commit_user_name: 'github-actions[bot]'
+          commit_user_email: 'github-actions[bot]@users.noreply.github.com'
+      - name: Lint with go vet
+        run: go vet ./...
+      - name: Build (smoke check)
+        run: go build -o /tmp/hex-loader .
+
+  release:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: hex-loader-linux-x64
+            extra_ldflags: ""
+          - os: macos-14
+            artifact: hex-loader-macos-arm64
+            extra_ldflags: ""
+          - os: windows-latest
+            artifact: hex-loader-windows-x64.exe
+            extra_ldflags: "-H windowsgui"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+      - name: Install GUI dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-dev libegl1-mesa-dev xorg-dev \
+            libwayland-dev libxkbcommon-dev wayland-protocols
+      - name: Setup MSYS2 (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-pkg-config
+      - name: Set CC for Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $gccPath = Join-Path $env:RUNNER_TEMP "msys64\mingw64\bin\gcc.exe"
+          if (-not (Test-Path $gccPath)) { $gccPath = "C:\msys64\mingw64\bin\gcc.exe" }
+          if (-not (Test-Path $gccPath)) {
+            $found = Get-ChildItem -Path $env:RUNNER_TEMP -Filter "gcc.exe" -Recurse -ErrorAction SilentlyContinue |
+                     Where-Object { $_.FullName -like "*mingw64*" } | Select-Object -First 1
+            if ($found) { $gccPath = $found.FullName }
+          }
+          if (-not (Test-Path $gccPath)) { throw "gcc.exe not found" }
+          $gccUnix = $gccPath -replace '\\', '/'
+          $gccDir = (Split-Path $gccPath -Parent) -replace '\\', '/'
+          echo "CC=$gccUnix" >> $env:GITHUB_ENV
+          echo "$gccDir" >> $env:GITHUB_PATH
+      - name: Build GUI binary
+        shell: bash
+        env:
+          CGO_ENABLED: 1
+        run: |
+          go build \
+            -ldflags="-s -w ${{ matrix.extra_ldflags }} -X main.version=${{ github.ref_name }}" \
+            -o ${{ matrix.artifact }} .
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact }}
+          generate_release_notes: true
+
+  build-appimage:
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+      - name: Install GUI dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-dev libegl1-mesa-dev xorg-dev \
+            libwayland-dev libxkbcommon-dev wayland-protocols
+      - name: Build binary
+        run: |
+          go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o hexloader .
+      - name: Prepare AppDir structure
+        run: |
+          mkdir -p hexloader.AppDir
+          cp hexloader hexloader.AppDir/
+          cp internal/assets/hex-loader.png hexloader.AppDir/hexloader.png
+          cat > hexloader.AppDir/hexloader.desktop << 'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=Hex Loader
+          Comment=GUI HEX uploader for Arduino
+          Exec=hexloader
+          Icon=hexloader
+          Categories=Development;Electronics;
+          Terminal=false
+          EOF
+          ln -sf hexloader hexloader.AppDir/AppRun
+          chmod +x hexloader.AppDir/AppRun hexloader.AppDir/hexloader
+      - name: Download appimagetool
+        run: |
+          wget -q "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage" -O appimagetool
+          chmod +x appimagetool
+      - name: Build AppImage
+        run: |
+          export APPIMAGE_EXTRACT_AND_RUN=1
+          ARCH=x86_64 ./appimagetool hexloader.AppDir/ Hex_Loader-${{ github.ref_name }}-x86_64.AppImage
+      - name: Verify AppImage was created
+        run: |
+          ls -la *.AppImage
+      - name: Upload AppImage to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Hex_Loader-${{ github.ref_name }}-x86_64.AppImage
+          overwrite: true
+
   build-packages:
     needs: release
     if: startsWith(github.ref, 'refs/tags/v')
