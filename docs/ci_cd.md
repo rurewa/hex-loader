@@ -2,7 +2,7 @@
 
 ### YAML
 
-проверить YAML локально
+проверить YAML локально (всегда это делать после пракки `ci.yml`)
 ```shell
 python3 -c "import yaml,sys; yaml.safe_load(open('.github/workflows/ci.yml'))" && echo OK
 ```
