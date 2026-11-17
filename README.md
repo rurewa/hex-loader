@@ -89,6 +89,10 @@ chmod +x Hex_Loader-v0.1.0-x86_64.AppImage
 brew update && brew install arduino-cli
 ```
 
+### Windows
+
+Приложение распространяется без цифровой подписи. При установке Windows SmartScreen может показать предупреждение «Неизвестный издатель» — это не означает, что файл опасен, просто у него нет доверенной цифровой подписи.
+
 ### Сборка из исходников
 ```bash
 git clone https://github.com/USER/REPO.git
