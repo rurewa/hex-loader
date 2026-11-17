@@ -118,6 +118,37 @@ jobs:
           files: ${{ matrix.artifact }}
           generate_release_notes: true
 
+      # --- macOS .app packaging ---
+      - name: Install fyne CLI (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          go install fyne.io/fyne/v2/cmd/fyne@latest
+          echo "$HOME/go/bin" >> $GITHUB_PATH
+
+      - name: Package as .app (macOS)
+        if: runner.os == 'macOS'
+        env:
+          CGO_ENABLED: 1
+        run: |
+          APP_VERSION="${GITHUB_REF_NAME#v}"
+          fyne package \
+            --release \
+            --os darwin \
+            --name "Hex Loader" \
+            --appID "com.example.hexloader" \
+            --appVersion "${APP_VERSION}" \
+            --icon internal/assets/hex-loader.png
+          mv "Hex Loader.app" "Hex-Loader.app"
+          zip -r "Hex-Loader-${{ github.ref_name }}-macos-arm64.zip" "Hex-Loader.app"
+          ls -la *.zip
+
+      - name: Upload .app to Release (macOS)
+        if: runner.os == 'macOS'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Hex-Loader-${{ github.ref_name }}-macos-arm64.zip
+          overwrite: true
+
   build-appimage:
     needs: release
     if: startsWith(github.ref, 'refs/tags/v')
