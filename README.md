@@ -66,6 +66,29 @@ chmod +x Hex_Loader-v0.1.0-x86_64.AppImage
 
 После скачивания сделайте файл исполняемым (`chmod +x`) и запустите.
 
+### MacOS
+
+Как разрешить запуск в **MacOS**:
+- Откройте «Системные настройки» (System Settings) через меню **Apple**.
+- Перейдите в раздел «Конфиденциальность и безопасность» (Privacy & Security).
+- Прокрутите страницу вниз до блока «Безопасность». Там вы увидите сообщение о том, что файл **hex-loader-macos-arm64** был заблокирован, и кнопку «Всё равно открыть» (Open Anyway) .
+- Далее снова переходим в трминал и снова вставляем код запуска: ~/Downloads/**hex-loader-macos-arm64**
+
+Появится уведомление о том, что файл не был открыт, появится кнопка «всё равно разрешить»
+
+**Homebrew**
+
+Если **Homebrew** ещё не установлен, сделайте это одной командой в терминале:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+Затем установите **arduino-cli**:
+
+```bash
+brew update && brew install arduino-cli
+```
+
 ### Сборка из исходников
 ```bash
 git clone https://github.com/USER/REPO.git

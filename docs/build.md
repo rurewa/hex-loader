@@ -51,6 +51,12 @@ go build -ldflags="-s -w" -trimpath -o hex-loader main.go
 ldd hex-loader
 ```
 
+В свежих релизах Fyne (2.8.x и новее) уже исправлены многие проблемы совместимости с macOS 26. Выполните в папке проекта для обновления Fyne:
+```shell
+go get -u fyne.io/fyne/v2@latest
+go mod tidy
+```
+
 ## Distrobox
 
 - [Установить Distrobox в Alt Linux 11](https://gitflic.ru/project/rurewa/altlinux/blob?file=content/Distrobox.md&branch=master)
