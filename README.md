@@ -35,14 +35,17 @@
 
 ## 📦 Установка
 
-Скачайте нужный файл из [Releases](https://github.com/USER/REPO/releases).
+Скачайте нужный файл из [Releases](https://github.com/rurewa/hex-loader/releases).
 
+### ALT Linux
+```shell
+apt-get install hex-loader_0.1.0_amd64.deb
+```
 ### Debian / Ubuntu / Mint
 ```bash
 sudo apt install ./hex-loader_0.1.0_amd64.deb
 ```
-
-### Fedora / RHEL / openSUSE / ALT Linux
+### Fedora / RHEL / openSUSE
 ```bash
 sudo dnf install ./hex-loader-0.1.0.x86_64.rpm
 ```
@@ -50,7 +53,6 @@ sudo dnf install ./hex-loader-0.1.0.x86_64.rpm
 ```bash
 sudo rpm -i ./hex-loader-0.1.0.x86_64.rpm
 ```
-
 ### AppImage (любой дистрибутив Linux, без установки)
 ```bash
 chmod +x Hex_Loader-v0.1.0-x86_64.AppImage
@@ -185,7 +187,7 @@ arduino-cli board list
 - [appimagetool](https://github.com/AppImage/appimagetool) — сборка AppImage.
 - AI-ассистенты **DeepSeek AI** и **Qwen3.8-Max** — помощь в разработке.
 
-Есть идеи или нашли баг? Создавайте [Issue](https://github.com/USER/REPO/issues) или присылайте Pull Request.
+Есть идеи или нашли баг? Создавайте [Pull Request](https://github.com/rurewa/hex-loader/pulls) или присылайте Pull Request.
 
 ## 🛠️ Планы
 
